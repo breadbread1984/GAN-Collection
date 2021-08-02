@@ -14,6 +14,7 @@ def main(unused_argv):
 
   # 1) create dataset
   if FLAGS.model == 'gan':
+    dataset = MNIST();
     trainset = dataset.load_trainset().map(gan.parse_function_generator()).batch(FLAGS.batch_size);
     testset = dataset.load_testset().map(gan.parse_function_generator()).batch(FLAGS.batch_size);
   else:
@@ -29,7 +30,6 @@ def main(unused_argv):
   else:
     if FLAGS.model == 'gan':
       model = gan.Trainer();
-      dataset = MNIST();
     else:
       raise Exception('unknown model!');
     optimizer = tf.keras.optimizers.Adam(tf.keras.optimizers.ExponentialDecay(1e-4, decay_steps = 20000, decay_rate = 0.97));
