@@ -30,10 +30,10 @@ def main(unused_argv):
   else:
     if FLAGS.model == 'gan':
       model = gan.Trainer();
-      loss = [gan.d_loss, gan.g_loss];
+      loss = {'d_loss': gan.d_loss, 'g_loss': gan.g_loss};
     else:
       raise Exception('unknown model!');
-    optimizer = tf.keras.optimizers.Adam(tf.keras.optimizers.schedules.ExponentialDecay(1e-4, decay_steps = 20000, decay_rate = 0.97));
+    optimizer = tf.keras.optimizers.Adam(1e-3);
     model.compile(optimizer = optimizer, loss = loss);
   # 3) train the model
   callbacks = [
