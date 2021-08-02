@@ -31,11 +31,10 @@ def main(unused_argv):
     if FLAGS.model == 'gan':
       model = gan.Trainer();
       loss = [gan.d_loss, gan.g_loss];
-      metrics = [tf.keras.metrics.Mean(name = 'd_loss'), tf.keras.metrics.Mean(name = 'g_loss')];
     else:
       raise Exception('unknown model!');
     optimizer = tf.keras.optimizers.Adam(tf.keras.optimizers.schedules.ExponentialDecay(1e-4, decay_steps = 20000, decay_rate = 0.97));
-    model.compile(optimizer = optimizer, loss = loss, metrics = metrics);
+    model.compile(optimizer = optimizer, loss = loss);
   # 3) train the model
   callbacks = [
     tf.keras.callbacks.TensorBoard(log_dir = join('checkpoints', FLAGS.model)),
