@@ -4,7 +4,7 @@ from os.path import join, exists;
 from absl import app, flags;
 import tensorflow as tf;
 from models import *;
-from create_dataset import *;
+from datasets import *;
 
 FLAGS = flags.FLAGS;
 flags.DEFINE_enum('model', default = 'gan', enum_values = ['gan',], help = 'models to train');
