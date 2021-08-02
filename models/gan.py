@@ -14,6 +14,5 @@ def Generator(z_size = 100, h1_size = 150, h2_size = 300, img_size = (28, 28)):
   return tf.keras.Input(inputs = z_prior, outputs = x_generate);
 
 def Discriminator(img_size = (28, 28)):
-
   
   x_generate = tf.keras.Input(img_size);
