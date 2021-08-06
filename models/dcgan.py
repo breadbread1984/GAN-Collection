@@ -135,6 +135,24 @@ def d_loss(_, d_loss):
 def g_loss(_, g_loss):
   return g_loss;
 
+class SummaryCallback(tf.keras.callbacks.Callback):
+  def __init__(self, trainer, class_num = None, z_size = 100, eval_freq = 100):
+    self.trainer = trainer;
+    self.class_num = class_num;
+    self.z_size = z_size;
+    self.eval_freq = eval_freq;
+    self.log = tf.summary.create_file_writer('checkpoints/dcgan');
+  def on_batch_end(self, batch, logs = None):
+    if batch % self.eval_freq == 0:
+      z_prior = tf.keras.Input((self.z_size,));
+      if self.class_num is not None: y_nature = tf.keras.Input(());
+      results = self.trainer.layers[2]([z_prior, y_nature] if self.class_num is not None else z_prior);
+      generator = tf.keras.Model(inputs = (z_prior, y_nature) if self.class_num is not None else z_prior, outputs = results);
+      sample = generator([tf.random.normal(shape = (1, self.z_size,)), tf.random.uniform((1,), maxval = self.class_num, dtype = tf.int32)] if self.class_num is not None else tf.random.normal(shape = (1, self.z_size,)));
+      image = tf.cast((sample + 1) / 2 * 255, dtype = tf.uint8);
+      with self.log.as_default():
+        tf.summary.image('generated', image, step = self.trainer.optimizer.iterations);
+
 if __name__ == "__main__":
   z_prior = np.random.normal(size = (4,100));
   x_nature = np.random.normal(size = (4, 64, 64, 3));
