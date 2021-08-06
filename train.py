@@ -41,16 +41,20 @@ def main(unused_argv):
     if FLAGS.model == 'gan':
       model = gan.Trainer();
       callbacks.append(gan.SummaryCallback(model));
+      lr = 2e-4;
+      epochs = 3e4;
       loss = {'d_loss': gan.d_loss, 'tf.cast_11': gan.g_loss};
     elif FLAGS.model == 'dcgan':
       model = dcgan.Trainer(y_size = dataset.y_size);
+      lr = 1e-3;
+      epochs = 3e4;
       loss = {'d_loss': dcgan.d_loss, 'g_loss': dcgan.g_loss};
     else:
       raise Exception('unknown model!');
-    optimizer = tf.keras.optimizers.Adam(1e-3);
+    optimizer = tf.keras.optimizers.Adam(lr);
     model.compile(optimizer = optimizer, loss = loss);
   # 3) train the model
-  model.fit(trainset, epochs = 500, validation_data = testset, callbacks = callbacks);
+  model.fit(trainset, epochs = epochs, validation_data = testset, callbacks = callbacks);
 
 if __name__ == "__main__":
 
