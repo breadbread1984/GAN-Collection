@@ -94,14 +94,14 @@ def Discriminator(d_channel = 64, img_channel = 3, class_num = None, y_size = No
     results = tf.keras.layers.Dense(1, activation = tf.keras.activations.sigmoid, kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(h2); # results.shape = (batch, 1)
   return tf.keras.Model(inputs = image if y_size is None else (image, y), outputs = results);
 
-def Trainer(z_size = 100, g_channel = 64, d_channel = 64, img_channel = 3, y_size = None, gc_channel = 1024, dc_channel = 1024, img_size = (64, 64)):
+def Trainer(z_size = 100, g_channel = 64, d_channel = 64, img_channel = 3, class_num = None, y_size = None, gc_channel = 1024, dc_channel = 1024, img_size = (64, 64)):
   z_prior = tf.keras.Input((z_size,)); # z_prior.shape = (batch, 100)
   if y_size is not None: y_nature = tf.keras.Input((y_size,)); # y_nature.shape = (batch, y_size)
-  x_generate = Generator(z_size = z_size, g_channel = g_channel, img_channel = img_channel, y_size = y_size, gc_channel = gc_channel, img_size = img_size)(z_prior if y_size is None else [z_prior, y_nature]);
+  x_generate = Generator(z_size = z_size, g_channel = g_channel, img_channel = img_channel, class_num = class_num, y_size = y_size, gc_channel = gc_channel, img_size = img_size)(z_prior if y_size is None else [z_prior, y_nature]);
   x_nature = tf.keras.Input((img_size[0], img_size[1], img_channel)); # x_nature.shape = (batch, 28, 28, 3)
   x = tf.keras.layers.Concatenate(axis = 0)([x_generate, x_nature]);
   cond = tf.keras.layers.Concatenate(axis = 0)([y_nature, y_nature]);
-  pred = Discriminator(d_channel = d_channel, img_channel = img_channel, y_size = y_size, dc_channel = dc_channel, img_size = img_size)(x if y_size is None else [x, cond]); # pred.shape = (batch_z + batch_x, 1)
+  pred = Discriminator(d_channel = d_channel, img_channel = img_channel, class_num = class_num, y_size = y_size, dc_channel = dc_channel, img_size = img_size)(x if y_size is None else [x, cond]); # pred.shape = (batch_z + batch_x, 1)
   pred_generate, pred_nature = tf.keras.layers.Lambda(lambda x: tf.split(x[0], [tf.shape(x[1])[0], tf.shape(x[2])[0]], axis = 0))([pred, z_prior, x_nature]);
   d_true_labels = tf.keras.layers.Lambda(lambda x: tf.ones_like(x))(pred_nature);
   d_false_labels = tf.keras.layers.Lambda(lambda x: tf.zeros_like(x))(pred_generate);
