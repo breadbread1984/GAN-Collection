@@ -42,12 +42,12 @@ def main(unused_argv):
       model = gan.Trainer();
       callbacks.append(gan.SummaryCallback(model));
       lr = 2e-4;
-      epochs = 3e4;
+      epochs = 30000;
       loss = {'d_loss': gan.d_loss, 'tf.cast_11': gan.g_loss};
     elif FLAGS.model == 'dcgan':
       model = dcgan.Trainer(y_size = dataset.y_size);
       lr = 1e-3;
-      epochs = 3e4;
+      epochs = 30000;
       loss = {'d_loss': dcgan.d_loss, 'g_loss': dcgan.g_loss};
     else:
       raise Exception('unknown model!');
