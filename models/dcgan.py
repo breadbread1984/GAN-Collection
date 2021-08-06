@@ -38,7 +38,7 @@ def Generator(z_size = 100, g_channel = 64, img_channel = 3, class_num = None, y
       return (h2, w2), (h4, w4);
     # has condition input
     shape2, shape4 = calc_shapes(img_size);
-    y = tf.keras.Input((class_num,)); # y.shape = (batch, class_num)
+    y = tf.keras.Input(()); # y.shape = (batch,)
     y_embed = tf.keras.layers.Embedding(class_num, y_size)(y);
     yb = tf.keras.layers.Reshape((1,1,y_size))(y_embed); # reshaped_y.shape = (batch, 1, 1, y_size)
     concated_z = tf.keras.layers.Concatenate(axis = -1)([z,y_embed]); # concated_z.shape = (batch, z_size + y_size)
@@ -75,7 +75,7 @@ def Discriminator(d_channel = 64, img_channel = 3, class_num = None, y_size = No
     h3 = tf.keras.layers.Flatten()(h3); # h3.shape = (batch, 4 * 4 * 64)
     results = tf.keras.layers.Dense(1, activation = tf.keras.activations.sigmoid, kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(h3); # results.shape = (batch, 1)
   else:
-    y = tf.keras.Input((y_size,)); # y.shape = (batch, y_size)
+    y = tf.keras.Input(()); # y.shape = (batch,)
     y_embed = tf.keras.layers.Embedding(class_num, y_size)(y);
     yb = tf.keras.layers.Reshape((1,1,y_size))(y_embed); # reshaped_y.shape = (batch, 1, 1, y_size)
     x = tf.keras.layers.Lambda(lambda x: tf.concat([x[0], tf.tile(x[1], (1, tf.shape(x[0])[1], tf.shape(x[0])[2], 1))], axis = -1))([image, yb]); # x.shape = (batch, 64, 64, 3 + y_size)
@@ -112,7 +112,7 @@ def Trainer(z_size = 100, g_channel = 64, d_channel = 64, img_channel = 3, class
   g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'g_loss')(g_true_labels, pred_generate);
   return tf.keras.Model(inputs = (z_prior, x_nature) if y_size is None else (z_prior, x_nature, y_nature), outputs = (d_loss, g_loss));
 
-def parse_function_generator(z_size = 100, class_num = None):
+def parse_function_generator(z_size = 100):
   def parse_function(serialized_example):
     feature = tf.io.parse_single_example(
       serialized_example,
@@ -125,9 +125,8 @@ def parse_function_generator(z_size = 100, class_num = None):
     label = feature['label'];
     sample = tf.cast(sample, dtype = tf.float32);
     sample = sample / 255. * 2 - 1; # sample range in [-1, 1]
-    y = tf.one_hot(label, class_num); # y.shape = (class_num,)
     # z_prior.shape = (100,), sample.shape = (28, 28)
-    return (tf.random.normal(shape = (z_size,)), sample, y), {'d_loss': 0, 'g_loss': 0};
+    return (tf.random.normal(shape = (z_size,)), sample, label), {'d_loss': 0, 'g_loss': 0};
   return parse_function;
 
 def d_loss(_, d_loss):
