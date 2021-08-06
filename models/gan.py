@@ -45,7 +45,7 @@ def Trainer(z_size = 100, img_size = (28, 28)):
   g_true_labels = d_true_labels;
   d_loss_real = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_true_labels, pred_nature);
   d_loss_fake = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_false_labels, pred_generate);
-  d_loss = tf.keras.layers.Add(name = 'd_loss')([d_loss_real, d_loss_fake]);
+  d_loss = tf.keras.layers.Lambda(lambda x: 0.5 * (x[0] + x[1]), name = 'd_loss')([d_loss_real, d_loss_fake]);
   g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'g_loss')(g_true_labels, pred_generate);
   return tf.keras.Model(inputs = (z_prior, x_nature), outputs = (d_loss, g_loss));
 
