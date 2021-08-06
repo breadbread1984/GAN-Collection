@@ -8,7 +8,7 @@ from datasets import *;
 
 FLAGS = flags.FLAGS;
 flags.DEFINE_enum('model', default = 'gan', enum_values = ['gan', 'dcgan'], help = 'models to train');
-flags.DEFINE_integer('batch_size', default = 128, help = 'batch size');
+flags.DEFINE_integer('batch_size', default = 32, help = 'batch size');
 
 def main(unused_argv):
 
