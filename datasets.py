@@ -45,12 +45,12 @@ class CelebA(object):
         }
       ));
       writer.write(trainsample.SerializeToString());
-    self.y_size = count;
+    self.class_num = count;
     return count;
   def load_dataset(self, filename = 'celeba_dataset.tfrecord', meta = 'celeba_meta.pkl'):
     with open(meta, 'rb') as f:
       name_id = pickle.loads(f.read());
-    self.y_size = len(name_id.keys());
+    self.class_num = len(name_id.keys());
     return tf.data.TFRecordDataset(filename);
 
 if __name__ == "__main__":

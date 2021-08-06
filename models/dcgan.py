@@ -4,7 +4,7 @@ from math import ceil;
 import numpy as np;
 import tensorflow as tf;
 
-def Generator(z_size = 100, g_channel = 64, img_channel = 3, y_size = None, gc_channel = 1024, img_size = (64, 64)):
+def Generator(z_size = 100, g_channel = 64, img_channel = 3, class_num = None, y_size = None, gc_channel = 1024, img_size = (64, 64)):
   z = tf.keras.Input((z_size,));
   if y_size is None:
     def calc_shapes(img_size):
@@ -38,13 +38,14 @@ def Generator(z_size = 100, g_channel = 64, img_channel = 3, y_size = None, gc_c
       return (h2, w2), (h4, w4);
     # has condition input
     shape2, shape4 = calc_shapes(img_size);
-    y = tf.keras.Input((y_size,)); # y.shape = (batch, y_size)
-    yb = tf.keras.layers.Reshape((1,1,y_size))(y); # reshaped_y.shape = (batch, 1, 1, y_size)
-    concated_z = tf.keras.layers.Concatenate(axis = -1)([z,y]); # concated_z.shape = (batch, z_size + y_size)
+    y = tf.keras.Input((class_num,)); # y.shape = (batch, class_num)
+    y_embed = tf.keras.layers.Embedding(class_num, y_size)(y);
+    yb = tf.keras.layers.Reshape((1,1,y_size))(y_embed); # reshaped_y.shape = (batch, 1, 1, y_size)
+    concated_z = tf.keras.layers.Concatenate(axis = -1)([z,y_embed]); # concated_z.shape = (batch, z_size + y_size)
     h0 = tf.keras.layers.Dense(gc_channel, kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(concated_z); # h0.shape = (batch, 1024)
     h0 = tf.keras.layers.BatchNormalization()(h0);
     h0 = tf.keras.layers.ReLU()(h0);
-    h0 = tf.keras.layers.Concatenate(axis = -1)([h0, y]); # h0.shape = (batch, 1024 + y_size)
+    h0 = tf.keras.layers.Concatenate(axis = -1)([h0, y_embed]); # h0.shape = (batch, 1024 + y_size)
     h1 = tf.keras.layers.Dense(2 * g_channel * np.prod(shape4), kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(h0); # h1.shape = (batch, 16 * 16 * 64 * 2)
     h1 = tf.keras.layers.BatchNormalization()(h1);
     h1 = tf.keras.layers.ReLU()(h1);
@@ -57,7 +58,7 @@ def Generator(z_size = 100, g_channel = 64, img_channel = 3, y_size = None, gc_c
     results = tf.keras.layers.Conv2DTranspose(img_channel, kernel_size = (5,5), strides = (2,2), padding = 'same', activation = tf.keras.activations.sigmoid, kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(h2); # h3.shape = (batch, 64, 64, 3)
   return tf.keras.Model(inputs = z if y_size is None else (z, y), outputs = results);
 
-def Discriminator(d_channel = 64, img_channel = 3, y_size = None, dc_channel = 1024, img_size = (64, 64)):
+def Discriminator(d_channel = 64, img_channel = 3, class_num = None, y_size = None, dc_channel = 1024, img_size = (64, 64)):
   image = tf.keras.Input((img_size[0], img_size[1], img_channel)); # z.shape = (batch, h = 64, w = 64, 3)
   if y_size is None:
     h0 = tf.keras.layers.Conv2D(d_channel, kernel_size = (5,5), strides = (2,2), padding = 'same', kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(image); # h0.shape = (batch, 32, 32, 64)
@@ -75,7 +76,8 @@ def Discriminator(d_channel = 64, img_channel = 3, y_size = None, dc_channel = 1
     results = tf.keras.layers.Dense(1, activation = tf.keras.activations.sigmoid, kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(h3); # results.shape = (batch, 1)
   else:
     y = tf.keras.Input((y_size,)); # y.shape = (batch, y_size)
-    yb = tf.keras.layers.Reshape((1,1,y_size))(y); # reshaped_y.shape = (batch, 1, 1, y_size)
+    y_embed = tf.keras.layers.Embedding(class_num, y_size)(y);
+    yb = tf.keras.layers.Reshape((1,1,y_size))(y_embed); # reshaped_y.shape = (batch, 1, 1, y_size)
     x = tf.keras.layers.Lambda(lambda x: tf.concat([x[0], tf.tile(x[1], (1, tf.shape(x[0])[1], tf.shape(x[0])[2], 1))], axis = -1))([image, yb]); # x.shape = (batch, 64, 64, 3 + y_size)
     h0 = tf.keras.layers.Conv2D(img_channel + y_size, kernel_size = (5,5), strides = (2,2), padding = 'same', kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(x); # h0.shape = (batch, 32, 32, 3 + y_size)
     h0 = tf.keras.layers.LeakyReLU(alpha = 0.2)(h0);
@@ -84,11 +86,11 @@ def Discriminator(d_channel = 64, img_channel = 3, y_size = None, dc_channel = 1
     h1 = tf.keras.layers.BatchNormalization()(h1);
     h1 = tf.keras.layers.LeakyReLU(alpha = 0.2)(h1);
     h1 = tf.keras.layers.Flatten()(h1); # h1.shape = (batch, 16 * 16 * (64 + y_size))
-    h1 = tf.keras.layers.Concatenate(axis = -1)([h1, y]); # h1.shape = (batch, 16 * 16 * (64 + y_size) + y_size)
+    h1 = tf.keras.layers.Concatenate(axis = -1)([h1, y_embed]); # h1.shape = (batch, 16 * 16 * (64 + y_size) + y_size)
     h2 = tf.keras.layers.Dense(dc_channel, kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(h1); # h2.shape = (batch, 1024)
     h2 = tf.keras.layers.BatchNormalization()(h2);
     h2 = tf.keras.layers.LeakyReLU(alpha = 0.2)(h2);
-    h2 = tf.keras.layers.Concatenate(axis = -1)([h2, y]); # h2.shape = (batch, 1024 + y_size)
+    h2 = tf.keras.layers.Concatenate(axis = -1)([h2, y_embed]); # h2.shape = (batch, 1024 + y_size)
     results = tf.keras.layers.Dense(1, activation = tf.keras.activations.sigmoid, kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(h2); # results.shape = (batch, 1)
   return tf.keras.Model(inputs = image if y_size is None else (image, y), outputs = results);
 
@@ -110,7 +112,7 @@ def Trainer(z_size = 100, g_channel = 64, d_channel = 64, img_channel = 3, y_siz
   g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'g_loss')(g_true_labels, pred_generate);
   return tf.keras.Model(inputs = (z_prior, x_nature) if y_size is None else (z_prior, x_nature, y_nature), outputs = (d_loss, g_loss));
 
-def parse_function_generator(z_size = 100, y_size = None):
+def parse_function_generator(z_size = 100, class_num = None):
   def parse_function(serialized_example):
     feature = tf.io.parse_single_example(
       serialized_example,
@@ -123,7 +125,7 @@ def parse_function_generator(z_size = 100, y_size = None):
     label = feature['label'];
     sample = tf.cast(sample, dtype = tf.float32);
     sample = sample / 255. * 2 - 1; # sample range in [-1, 1]
-    y = tf.one_hot(label, y_size); # y.shape = (y_size,)
+    y = tf.one_hot(label, class_num); # y.shape = (class_num,)
     # z_prior.shape = (100,), sample.shape = (28, 28)
     return (tf.random.normal(shape = (z_size,)), sample, y), {'d_loss': 0, 'g_loss': 0};
   return parse_function;
@@ -138,7 +140,7 @@ if __name__ == "__main__":
   z_prior = np.random.normal(size = (4,100));
   x_nature = np.random.normal(size = (4, 64, 64, 3));
   y_nature = np.random.normal(size = (4, 10));
-  trainer = Trainer(y_size = 10);
+  trainer = Trainer(class_num = 100,y_size = 10);
   d_loss, g_loss = trainer([z_prior, x_nature, y_nature]);
   print(d_loss.shape, g_loss.shape);
   trainer.save('trainer.h5');

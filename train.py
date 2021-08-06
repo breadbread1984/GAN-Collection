@@ -19,8 +19,8 @@ def main(unused_argv):
     testset = dataset.load_testset().map(gan.parse_function_generator()).batch(FLAGS.batch_size);
   elif FLAGS.model == 'dcgan':
     dataset = CelebA();
-    trainset = dataset.load_dataset().map(dcgan.parse_function_generator(y_size = dataset.y_size)).batch(FLAGS.batch_size);
-    testset = dataset.load_dataset().map(dcgan.parse_function_generator(y_size = dataset.y_size)).batch(FLAGS.batch_size);
+    trainset = dataset.load_dataset().map(dcgan.parse_function_generator(class_num = dataset.class_num)).batch(FLAGS.batch_size);
+    testset = dataset.load_dataset().map(dcgan.parse_function_generator(class_num = dataset.class_num)).batch(FLAGS.batch_size);
   else:
     raise Exception('unknown model!');
   # 2) create or load compiled model
@@ -45,7 +45,7 @@ def main(unused_argv):
       epochs = 30000;
       loss = {'d_loss': gan.d_loss, 'tf.cast_11': gan.g_loss};
     elif FLAGS.model == 'dcgan':
-      model = dcgan.Trainer(y_size = dataset.y_size);
+      model = dcgan.Trainer(class_num = dataset.class_num, y_size = 10);
       lr = 1e-3;
       epochs = 30000;
       loss = {'d_loss': dcgan.d_loss, 'g_loss': dcgan.g_loss};
