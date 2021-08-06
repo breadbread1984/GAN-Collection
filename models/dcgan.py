@@ -111,7 +111,15 @@ def Trainer(z_size = 100, g_channel = 64, d_channel = 64, img_channel = 3, y_siz
   return tf.keras.Model(inputs = (z_prior, x_nature) if y_size is None else (z_prior, x_nature, y_nature), outputs = (d_loss, g_loss));
 
 def parse_function_generator(z_size = 100, y_size = None):
-  def parse_function(sample, label):
+  def parse_function(serialized_example):
+    feature = tf.io.parse_single_example(
+      serialized_example,
+      features = {
+        'image': tf.io.FixedLenFeature((), dtype = tf.string),
+        'label': tf.io.FixedLenFeature((), dtype = tf.int64)
+      });
+    sample = tf.io.decode_jpeg(feature['image']);
+    label = feature['label']:
     sample = tf.cast(sample, dtype = tf.float32);
     sample = sample / 255. * 2 - 1; # sample range in [-1, 1]
     y = tf.one_hot(label, y_size); # y.shape = (y_size,)
