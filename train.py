@@ -19,8 +19,8 @@ def main(unused_argv):
     testset = dataset.load_testset().map(gan.parse_function_generator()).batch(FLAGS.batch_size);
   elif FLAGS.model == 'dcgan':
     dataset = CelebA();
-    trainset = dataset.load_dataset().map(dcgan.parse_function_generator(class_num = dataset.class_num)).batch(FLAGS.batch_size);
-    testset = dataset.load_dataset().map(dcgan.parse_function_generator(class_num = dataset.class_num)).batch(FLAGS.batch_size);
+    trainset = dataset.load_dataset().map(dcgan.parse_function_generator()).batch(FLAGS.batch_size);
+    testset = dataset.load_dataset().map(dcgan.parse_function_generator()).batch(FLAGS.batch_size);
   else:
     raise Exception('unknown model!');
   # 2) create or load compiled model
