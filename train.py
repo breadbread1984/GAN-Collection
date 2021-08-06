@@ -34,8 +34,13 @@ def main(unused_argv):
     model = tf.keras.models.load_model(join('checkpoints', FLAGS.model), custom_objects = custom_objects, compile = True);
     optimizer = model.optimizer;
   else:
+    callbacks = [
+      tf.keras.callbacks.TensorBoard(log_dir = join('checkpoints', FLAGS.model)),
+      tf.keras.callbacks.ModelCheckpoint(filepath = join('checkpoints', FLAGS.model), save_freq = 1000)
+    ];
     if FLAGS.model == 'gan':
       model = gan.Trainer();
+      callbacks.append(gan.SummaryCallback(model));
       loss = {'d_loss': gan.d_loss, 'g_loss': gan.g_loss};
     elif FLAGS.model == 'dcgan':
       model = dcgan.Trainer(y_size = dataset.y_size);
@@ -45,10 +50,6 @@ def main(unused_argv):
     optimizer = tf.keras.optimizers.Adam(1e-3);
     model.compile(optimizer = optimizer, loss = loss);
   # 3) train the model
-  callbacks = [
-    tf.keras.callbacks.TensorBoard(log_dir = join('checkpoints', FLAGS.model)),
-    tf.keras.callbacks.ModelCheckpoint(filepath = join('checkpoints', FLAGS.model), save_freq = 1000)
-  ];
   model.fit(trainset, epochs = 500, validation_data = testset, callbacks = callbacks);
 
 if __name__ == "__main__":

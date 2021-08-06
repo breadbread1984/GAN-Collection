@@ -51,6 +51,22 @@ def d_loss(_, d_loss):
 def g_loss(_, g_loss):
   return g_loss;
 
+class SummaryCallback(tf.keras.callbacks.Callback):
+  def __init__(self, trainer, z_size = 100, eval_freq = 100):
+    self.trainer = trainer;
+    self.z_size = z_size;
+    self.eval_freq = eval_freq;
+    self.log = tf.summary.create_file_writer('checkpoints/gan');
+  def on_batch_end(self, batch, logs = None):
+    if batch % self.eval_freq == 0:
+      inputs = tf.keras.Input((self.z_size,));
+      results = self.trainer.layers[1](inputs);
+      generator = tf.keras.Model(inputs = inputs, outputs = results); # generator.shape = (1, 28, 28)
+      sample = generator(tf.random.normal(shape = (1, z_size,)));
+      image = tf.cast((sample + 1) / 2 * 255, dtype = tf.uint8);
+      with self.log.as_default():
+        tf.summary.image('generated', image, step = self.trainer.optimizer.iterations);
+
 if __name__ == "__main__":
 
   z_prior = np.random.normal(size = (4,100));
