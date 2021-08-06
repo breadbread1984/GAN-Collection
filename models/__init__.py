@@ -3,4 +3,4 @@
 __all__ = ['gan',];
 
 import models.gan;
-
+import models.dcgan;

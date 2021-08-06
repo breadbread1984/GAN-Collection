@@ -106,9 +106,24 @@ def Trainer(z_size = 100, g_channel = 64, d_channel = 64, img_channel = 3, y_siz
   g_true_labels = d_true_labels;
   d_loss_real = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_true_labels, pred_nature);
   d_loss_fake = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_false_labels, pred_generate);
-  d_loss = tf.keras.layers.Add()([d_loss_real, d_loss_fake]);
-  g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False)(g_true_labels, pred_generate);
+  d_loss = tf.keras.layers.Add(name = 'd_loss')([d_loss_real, d_loss_fake]);
+  g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'g_loss')(g_true_labels, pred_generate);
   return tf.keras.Model(inputs = (z_prior, x_nature) if y_size is None else (z_prior, x_nature, y_nature), outputs = (d_loss, g_loss));
+
+def parse_function_generator(z_size = 100, y_size = None):
+  def parse_function(sample, label):
+    sample = tf.cast(sample, dtype = tf.float32);
+    sample = sample / 255. * 2 - 1; # sample range in [-1, 1]
+    y = tf.one_hot(label, y_size); # y.shape = (y_size,)
+    # z_prior.shape = (100,), sample.shape = (28, 28)
+    return (tf.random.normal(shape = (z_size,)), sample, y), {'d_loss': 0, 'g_loss': 0};
+  return parse_function;
+
+def d_loss(_, d_loss):
+  return d_loss;
+
+def g_loss(_, g_loss):
+  return g_loss;
 
 if __name__ == "__main__":
   z_prior = np.random.normal(size = (4,100));

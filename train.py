@@ -17,12 +17,18 @@ def main(unused_argv):
     dataset = MNIST();
     trainset = dataset.load_trainset().map(gan.parse_function_generator()).batch(FLAGS.batch_size);
     testset = dataset.load_testset().map(gan.parse_function_generator()).batch(FLAGS.batch_size);
+  elif FLAGS.model == 'dcgan':
+    dataset = CelebA();
+    trainset = dataset.load_dataset().map(dcgan.parse_function_generator(y_size = dataset.y_size)).batch(FLAGS.batch_size);
+    testset = dataset.load_dataset().map(dcgan.parse_function_generator(y_size = dataset.y_size)).batch(FLAGS.batch_size);
   else:
     raise Exception('unknown model!');
   # 2) create or load compiled model
   if exists(join('checkpoints', FLAGS.model)):
     if FLAGS.model == 'gan':
       custom_objects = {'tf': tf, 'd_loss': gan.d_loss, 'g_loss': gan.g_loss};
+    elif FLAGS.model == 'dcgan':
+      custom_objects = {'tf': tf, 'd_loss': dcgan.d_loss, 'g_loss': dcgan.g_loss};
     else:
       raise Exception('unknown model!');
     model = tf.keras.models.load_model(join('checkpoints', FLAGS.model), custom_objects = custom_objects, compile = True);
@@ -31,6 +37,9 @@ def main(unused_argv):
     if FLAGS.model == 'gan':
       model = gan.Trainer();
       loss = {'d_loss': gan.d_loss, 'g_loss': gan.g_loss};
+    elif FLAGS.model == 'dcgan':
+      model = dcgan.Trainer(y_size = dataset.y_size);
+      loss = {'d_loss': dcgan.d_loss, 'g_loss': dcgan.g_loss};
     else:
       raise Exception('unknown model!');
     optimizer = tf.keras.optimizers.Adam(1e-3);
