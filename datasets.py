@@ -37,7 +37,7 @@ class CelebA(object):
         print('can\'t process image %s' % img_path);
         continue;
       height, width, channel = img.shape;
-      subimg = img[(height-128)//2:(height-128)//2+128,(width-128)//2:(width-128)//2+128,:];
+      subimg = img[(height-128)//2+20:(height-128)//2+20+128,(width-128)//2:(width-128)//2+128,:];
       trainsample = tf.train.Example(features = tf.train.Features(
         feature = {
           'image': tf.train.Feature(bytes_list = tf.train.BytesList(value = [tf.io.encode_jpeg(subimg).numpy()])),
