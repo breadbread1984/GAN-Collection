@@ -119,7 +119,7 @@ def parse_function_generator(z_size = 100, y_size = None):
         'label': tf.io.FixedLenFeature((), dtype = tf.int64)
       });
     sample = tf.io.decode_jpeg(feature['image']);
-    label = feature['label']:
+    label = feature['label'];
     sample = tf.cast(sample, dtype = tf.float32);
     sample = sample / 255. * 2 - 1; # sample range in [-1, 1]
     y = tf.one_hot(label, y_size); # y.shape = (y_size,)
