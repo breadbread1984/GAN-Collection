@@ -92,23 +92,29 @@ def Discriminator(d_channel = 64, img_channel = 3, y_size = None, dc_channel = 1
     results = tf.keras.layers.Dense(1, activation = tf.keras.activations.sigmoid, kernel_initializer = tf.keras.initializers.RandomNormal(stddev = 0.02))(h2); # results.shape = (batch, 1)
   return tf.keras.Model(inputs = image if y_size is None else (image, y), outputs = results);
 
+def Trainer(z_size = 100, g_channel = 64, d_channel = 64, img_channel = 3, y_size = None, gc_channel = 1024, dc_channel = 1024, img_size = (64, 64)):
+  z_prior = tf.keras.Input((z_size,)); # z_prior.shape = (batch, 100)
+  if y_size is not None: y_nature = tf.keras.Input((y_size,)); # y_nature.shape = (batch, y_size)
+  x_generate = Generator(z_size = z_size, g_channel = g_channel, img_channel = img_channel, y_size = y_size, gc_channel = gc_channel, img_size = img_size)(z_prior if y_size is None else [z_prior, y_nature]);
+  x_nature = tf.keras.Input((img_size[0], img_size[1], img_channel)); # x_nature.shape = (batch, 28, 28, 3)
+  x = tf.keras.layers.Concatenate(axis = 0)([x_generate, x_nature]);
+  cond = tf.keras.layers.Concatenate(axis = 0)([y_nature, y_nature]);
+  pred = Discriminator(d_channel = d_channel, img_channel = img_channel, y_size = y_size, dc_channel = dc_channel, img_size = img_size)(x if y_size is None else [x, cond]); # pred.shape = (batch_z + batch_x, 1)
+  pred_generate, pred_nature = tf.keras.layers.Lambda(lambda x: tf.split(x[0], [tf.shape(x[1])[0], tf.shape(x[2])[0]], axis = 0))([pred, z_prior, x_nature]);
+  d_true_labels = tf.keras.layers.Lambda(lambda x: tf.ones_like(x))(pred_nature);
+  d_false_labels = tf.keras.layers.Lambda(lambda x: tf.zeros_like(x))(pred_generate);
+  g_true_labels = d_true_labels;
+  d_loss_real = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_true_labels, pred_nature);
+  d_loss_fake = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_false_labels, pred_generate);
+  d_loss = tf.keras.layers.Add()([d_loss_real, d_loss_fake]);
+  g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False)(g_true_labels, pred_generate);
+  return tf.keras.Model(inputs = (z_prior, x_nature) if y_size is None else (z_prior, x_nature, y_nature), outputs = (d_loss, g_loss));
+
 if __name__ == "__main__":
-  inputs = np.random.normal(size = (4,100));
-  cond = np.random.normal(size = (4, 10))
-  g = Generator();
-  gc = Generator(y_size = 10);
-  outputs = g(inputs);
-  print(outputs.shape);
-  outputs = gc([inputs, cond]);
-  print(outputs.shape);
-  g.save('generator.h5');
-  gc.save('generator_cond.h5');
-  inputs = np.random.normal(size = (4, 64, 64, 3));
-  d = Discriminator();
-  dc = Discriminator(y_size = 10);
-  outputs = d(inputs);
-  print(outputs.shape);
-  outputs = dc([inputs, cond]);
-  print(outputs.shape);
-  d.save('discriminator.h5');
-  dc.save('discriminator_cond.h5');
+  z_prior = np.random.normal(size = (4,100));
+  x_nature = np.random.normal(size = (4, 64, 64, 3));
+  y_nature = np.random.normal(size = (4, 10));
+  trainer = Trainer(y_size = 10);
+  d_loss, g_loss = trainer([z_prior, x_nature, y_nature]);
+  print(d_loss.shape, g_loss.shape);
+  trainer.save('trainer.h5');
