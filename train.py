@@ -28,7 +28,7 @@ def main(unused_argv):
     if FLAGS.model == 'gan':
       custom_objects = {'tf': tf, 'd_loss': gan.d_loss, 'tf.cast_11': gan.g_loss};
     elif FLAGS.model == 'dcgan':
-      custom_objects = {'tf': tf, 'd_loss': dcgan.d_loss, 'g_loss': dcgan.g_loss};
+      custom_objects = {'tf': tf, 'd_loss': dcgan.d_loss, 'tf.cast_11': dcgan.g_loss};
     else:
       raise Exception('unknown model!');
     model = tf.keras.models.load_model(join('checkpoints', FLAGS.model), custom_objects = custom_objects, compile = True);
@@ -48,7 +48,7 @@ def main(unused_argv):
       model = dcgan.Trainer(class_num = dataset.class_num, y_size = 10);
       lr = 1e-3;
       epochs = 30000;
-      loss = {'d_loss': dcgan.d_loss, 'g_loss': dcgan.g_loss};
+      loss = {'d_loss': dcgan.d_loss, 'tf.cast_11': dcgan.g_loss};
     else:
       raise Exception('unknown model!');
     optimizer = tf.keras.optimizers.Adam(lr);
