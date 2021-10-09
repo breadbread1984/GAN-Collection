@@ -43,13 +43,13 @@ def main(unused_argv):
       callbacks.append(gan.SummaryCallback(model));
       lr = 2e-4;
       epochs = 30000;
-      loss = {'d_loss': gan.d_loss, 'tf.cast_11': gan.g_loss};
+      loss = {'d_loss': gan.d_loss, 'g_loss': gan.g_loss};
     elif FLAGS.model == 'dcgan':
       model = dcgan.Trainer(class_num = dataset.class_num, y_size = 10);
       callbacks.append(dcgan.SummaryCallback(model, class_num = dataset.class_num));
       lr = 2e-4;
       epochs = 30000;
-      loss = {'d_loss': dcgan.d_loss, 'tf.cast_11': dcgan.g_loss};
+      loss = {'d_loss': dcgan.d_loss, 'g_loss': dcgan.g_loss};
     else:
       raise Exception('unknown model!');
     optimizer = tf.keras.optimizers.Adam(lr);
