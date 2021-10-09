@@ -41,7 +41,7 @@ def Trainer(z_size = 100, img_size = (28, 28)):
   disc = Discriminator(img_size = img_size);
   pred = disc(x); # pred.shape = (batch_z + batch_x, 1)
   # pred_generate.shape = (batch_z, 1), pred_nature.shape = (batch_x, 1)
-  pred_generate, pred_nature = tf.keras.layers.Lambda(lambda x: tf.split(x[0], [tf.shape(x[1])[0], tf.shape(x[2])[0]], axis = 0))([pred, z_prior, x_nature]);
+  pred_generate, pred_nature = tf.keras.layers.Lambda(lambda x: tf.split(x[0], [tf.shape(x[1])[0], tf.shape(x[2])[0]], axis = 0))([pred, x_generate, x_nature]);
   d_loss_real = tf.keras.layers.Lambda(lambda x: tf.keras.losses.BinaryCrossentropy(from_logits = False)(tf.ones_like(x),x))(pred_nature);
   d_loss_fake = tf.keras.layers.Lambda(lambda x: tf.keras.losses.BinaryCrossentropy(from_logits = False)(tf.zeros_like(x),x))(pred_generate);
   d_loss = tf.keras.layers.Lambda(lambda x: 0.5 * (x[0] + x[1]), name = 'd_loss')([d_loss_real, d_loss_fake]);
