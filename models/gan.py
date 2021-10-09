@@ -42,17 +42,13 @@ def Trainer(z_size = 100, img_size = (28, 28)):
   pred = disc(x); # pred.shape = (batch_z + batch_x, 1)
   # pred_generate.shape = (batch_z, 1), pred_nature.shape = (batch_x, 1)
   pred_generate, pred_nature = tf.keras.layers.Lambda(lambda x: tf.split(x[0], [tf.shape(x[1])[0], tf.shape(x[2])[0]], axis = 0))([pred, z_prior, x_nature]);
-  d_true_labels = tf.keras.layers.Lambda(lambda x: tf.ones_like(x))(pred_nature);
-  d_false_labels = tf.keras.layers.Lambda(lambda x: tf.zeros_like(x))(pred_generate);
-  g_true_labels = d_true_labels;
-  d_loss_real = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'd_loss_real')(d_true_labels, pred_nature);
-  d_loss_fake = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'd_loss_fake')(d_false_labels, pred_generate);
+  d_loss_real = tf.keras.layers.Lambda(lambda x: tf.keras.losses.BinaryCrossentropy(from_logits = False)(tf.ones_like(x),x))(pred_nature);
+  d_loss_fake = tf.keras.layers.Lambda(lambda x: tf.keras.losses.BinaryCrossentropy(from_logits = False)(tf.zeros_like(x),x))(pred_generate);
   d_loss = tf.keras.layers.Lambda(lambda x: 0.5 * (x[0] + x[1]), name = 'd_loss')([d_loss_real, d_loss_fake]);
   # NOTE: using untrainable discriminator is to prevent back propagation of g_loss from updating parameters of discriminator
-  const_dist = tf.keras.Model(inputs = disc.inputs, outputs = disc.outputs);
-  const_dist.trainable = False;
+  const_dist = tf.keras.Model(inputs = disc.inputs, outputs = disc.outputs); const_dist.trainable = False;
   pred_generate = const_dist(x_generate);
-  g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'g_loss')(g_true_labels, pred_generate);
+  g_loss = tf.keras.layers.Lambda(lambda x: tf.keras.losses.BinaryCrossentropy(from_logits = False)(tf.ones_like(x),x), name = 'g_loss')(pred_generate);
   return tf.keras.Model(inputs = (z_prior, x_nature), outputs = (d_loss, g_loss));
 
 def parse_function_generator(z_size = 100):

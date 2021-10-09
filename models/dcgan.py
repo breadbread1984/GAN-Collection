@@ -105,15 +105,13 @@ def Trainer(z_size = 100, g_channel = 64, d_channel = 64, img_channel = 3, class
   disc = Discriminator(d_channel = d_channel, img_channel = img_channel, class_num = class_num, y_size = y_size, dc_channel = dc_channel, img_size = img_size);
   pred = disc(x if y_size is None else [x, cond]); # pred.shape = (batch_z + batch_x, 1)
   pred_generate, pred_nature = tf.keras.layers.Lambda(lambda x: tf.split(x[0], [tf.shape(x[1])[0], tf.shape(x[2])[0]], axis = 0))([pred, z_prior, x_nature]);
-  d_true_labels = tf.keras.layers.Lambda(lambda x: tf.ones_like(x))(pred_nature);
-  d_false_labels = tf.keras.layers.Lambda(lambda x: tf.zeros_like(x))(pred_generate);
-  g_true_labels = d_true_labels;
-  d_loss_real = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_true_labels, pred_nature);
-  d_loss_fake = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_false_labels, pred_generate);
+  d_loss_real = tf.keras.layers.Lambda(lambda x: tf.keras.losses.BinaryCrossentropy(from_logits = False)(tf.ones_like(x),x))(pred_nature);
+  d_loss_fake = tf.keras.layers.Lambda(lambda x: tf.keras.losses.BinaryCrossentropy(from_logits = False)(tf.zeros_like(x),x))(pred_generate);
   d_loss = tf.keras.layers.Lambda(lambda x: 0.5 * (x[0] + x[1]), name = 'd_loss')([d_loss_real, d_loss_fake]);
   # NOTE: enclosing discriminator within lambda function is to prevent back propagation of g_loss from updating parameters of discriminator
-  pred_generate = tf.keras.layers.Lambda(lambda x: disc(x))(x_generate if y_size is None else [x_generate, y_nature]);
-  g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'g_loss')(g_true_labels, pred_generate);
+  const_dist = tf.keras.Model(inputs = disc.inputs, outputs = disc.outputs); const_dist.trainable = False;
+  pred_generate = const_dist(x_generate if y_size is None else [x_generate, y_nature]);
+  g_loss = tf.keras.layers.Lambda(lambda x: tf.keras.losses.BinaryCrossentropy(from_logits = False)(tf.ones_like(x),x), name = 'g_loss')(pred_generate);
   return tf.keras.Model(inputs = (z_prior, x_nature) if y_size is None else (z_prior, x_nature, y_nature), outputs = (d_loss, g_loss));
 
 def parse_function_generator(z_size = 100):
