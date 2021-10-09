@@ -128,7 +128,7 @@ def parse_function_generator(z_size = 100):
     sample = tf.cast(sample, dtype = tf.float32);
     sample = sample / 255. * 2 - 1; # sample range in [-1, 1]
     # z_prior.shape = (100,), sample.shape = (28, 28)
-    return (tf.random.normal(shape = (z_size,)), sample, label), {'d_loss': 0, 'tf.cast_11': 0};
+    return (tf.random.normal(shape = (z_size,)), sample, label), {'d_loss': 0, 'g_loss': 0};
   return parse_function;
 
 def d_loss(_, d_loss):
