@@ -48,6 +48,7 @@ def Trainer(z_size = 100, img_size = (28, 28)):
   d_loss_real = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_true_labels, pred_nature);
   d_loss_fake = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_false_labels, pred_generate);
   d_loss = tf.keras.layers.Lambda(lambda x: 0.5 * (x[0] + x[1]), name = 'd_loss')([d_loss_real, d_loss_fake]);
+  # NOTE: enclosing discriminator within lambda function is to prevent back propagation of g_loss update parameters of discriminator
   pred_generate = tf.keras.layers.Lambda(lambda x: disc(x))(x_generate);
   g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'g_loss')(g_true_labels, pred_generate);
   return tf.keras.Model(inputs = (z_prior, x_nature), outputs = (d_loss, g_loss));
@@ -85,7 +86,7 @@ class SummaryCallback(tf.keras.callbacks.Callback):
 
 if __name__ == "__main__":
 
-  z_prior = np.random.normal(size = (4,100));
+  z_prior = np.random.normal(size = (6,100));
   generator = Generator();
   discriminator = Discriminator();
   generated = generator(z_prior);
