@@ -99,9 +99,11 @@ def Trainer(z_size = 100, g_channel = 64, d_channel = 64, img_channel = 3, class
   if y_size is not None: y_nature = tf.keras.Input(()); # y_nature.shape = (batch,)
   x_generate = Generator(z_size = z_size, g_channel = g_channel, img_channel = img_channel, class_num = class_num, y_size = y_size, gc_channel = gc_channel, img_size = img_size)(z_prior if y_size is None else [z_prior, y_nature]);
   x_nature = tf.keras.Input((img_size[0], img_size[1], img_channel)); # x_nature.shape = (batch, 28, 28, 3)
-  x = tf.keras.layers.Concatenate(axis = 0)([x_generate, x_nature]);
+  # NOTE: stop_gradient is to prevent back propagation of d_loss from updating parameters of generator
+  x = tf.keras.layers.Lambda(lambda x: tf.concat([tf.stop_gradient(x[0]), x[1]], axis = 0))([x_generate, x_nature]);
   cond = tf.keras.layers.Concatenate(axis = 0)([y_nature, y_nature]);
-  pred = Discriminator(d_channel = d_channel, img_channel = img_channel, class_num = class_num, y_size = y_size, dc_channel = dc_channel, img_size = img_size)(x if y_size is None else [x, cond]); # pred.shape = (batch_z + batch_x, 1)
+  disc = Discriminator(d_channel = d_channel, img_channel = img_channel, class_num = class_num, y_size = y_size, dc_channel = dc_channel, img_size = img_size);
+  pred = disc(x if y_size is None else [x, cond]); # pred.shape = (batch_z + batch_x, 1)
   pred_generate, pred_nature = tf.keras.layers.Lambda(lambda x: tf.split(x[0], [tf.shape(x[1])[0], tf.shape(x[2])[0]], axis = 0))([pred, z_prior, x_nature]);
   d_true_labels = tf.keras.layers.Lambda(lambda x: tf.ones_like(x))(pred_nature);
   d_false_labels = tf.keras.layers.Lambda(lambda x: tf.zeros_like(x))(pred_generate);
@@ -109,6 +111,8 @@ def Trainer(z_size = 100, g_channel = 64, d_channel = 64, img_channel = 3, class
   d_loss_real = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_true_labels, pred_nature);
   d_loss_fake = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_false_labels, pred_generate);
   d_loss = tf.keras.layers.Lambda(lambda x: 0.5 * (x[0] + x[1]), name = 'd_loss')([d_loss_real, d_loss_fake]);
+  # NOTE: enclosing discriminator within lambda function is to prevent back propagation of g_loss from updating parameters of discriminator
+  pred_generate = tf.keras.layers.Lambda(lambda x: disc(x))(x_generate if y_size is None else [x_generate, y_nature]);
   g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'g_loss')(g_true_labels, pred_generate);
   return tf.keras.Model(inputs = (z_prior, x_nature) if y_size is None else (z_prior, x_nature, y_nature), outputs = (d_loss, g_loss));
 

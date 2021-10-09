@@ -36,7 +36,7 @@ def Trainer(z_size = 100, img_size = (28, 28)):
   z_prior = tf.keras.Input((z_size,)); # z_prior.shape = (batch_z, 100)
   x_generate = Generator(z_size = z_size, img_size = img_size)(z_prior);
   x_nature = tf.keras.Input(img_size); # x_nature.shape = (batch_x, 28, 28)
-  # NOTE: stop_gradient is to prevent back propagation of d_loss update parameters of generator
+  # NOTE: stop_gradient is to prevent back propagation of d_loss from updating parameters of generator
   x = tf.keras.layers.Lambda(lambda x: tf.concat([tf.stop_gradient(x[0]), x[1]], axis = 0))([x_generate, x_nature]);
   disc = Discriminator(img_size = img_size);
   pred = disc(x); # pred.shape = (batch_z + batch_x, 1)
@@ -48,7 +48,7 @@ def Trainer(z_size = 100, img_size = (28, 28)):
   d_loss_real = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'd_loss_real')(d_true_labels, pred_nature);
   d_loss_fake = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'd_loss_fake')(d_false_labels, pred_generate);
   d_loss = tf.keras.layers.Lambda(lambda x: 0.5 * (x[0] + x[1]), name = 'd_loss')([d_loss_real, d_loss_fake]);
-  # NOTE: enclosing discriminator within lambda function is to prevent back propagation of g_loss update parameters of discriminator
+  # NOTE: enclosing discriminator within lambda function is to prevent back propagation of g_loss from updating parameters of discriminator
   pred_generate = tf.keras.layers.Lambda(lambda x: disc(x))(x_generate);
   g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'g_loss')(g_true_labels, pred_generate);
   return tf.keras.Model(inputs = (z_prior, x_nature), outputs = (d_loss, g_loss));
