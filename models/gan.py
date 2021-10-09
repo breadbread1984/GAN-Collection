@@ -45,8 +45,8 @@ def Trainer(z_size = 100, img_size = (28, 28)):
   d_true_labels = tf.keras.layers.Lambda(lambda x: tf.ones_like(x))(pred_nature);
   d_false_labels = tf.keras.layers.Lambda(lambda x: tf.zeros_like(x))(pred_generate);
   g_true_labels = d_true_labels;
-  d_loss_real = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_true_labels, pred_nature);
-  d_loss_fake = tf.keras.losses.BinaryCrossentropy(from_logits = False)(d_false_labels, pred_generate);
+  d_loss_real = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'd_loss_real')(d_true_labels, pred_nature);
+  d_loss_fake = tf.keras.losses.BinaryCrossentropy(from_logits = False, name = 'd_loss_fake')(d_false_labels, pred_generate);
   d_loss = tf.keras.layers.Lambda(lambda x: 0.5 * (x[0] + x[1]), name = 'd_loss')([d_loss_real, d_loss_fake]);
   # NOTE: enclosing discriminator within lambda function is to prevent back propagation of g_loss update parameters of discriminator
   pred_generate = tf.keras.layers.Lambda(lambda x: disc(x))(x_generate);
