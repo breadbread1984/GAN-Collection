@@ -96,7 +96,7 @@ def main(unused_argv):
         tf.summary.scalar('d_loss', disc_loss.result(), step = optimizer.iterations);
         tf.summary.scalar('g_loss', gen_loss.result(), step = optimizer.iterations);
         tf.summary.image('sample', image, step = optimizer.iterations);
-        print('#%d: d_loss = %f g_loss = %f' % (disc_loss.result(), gen_loss.result()));
+        print('#%d: d_loss = %f g_loss = %f' % (optimizer.iterations, disc_loss.result(), gen_loss.result()));
         disc_loss.reset_states();
         gen_loss.reset_states();
 
