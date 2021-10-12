@@ -14,6 +14,7 @@ flags.DEFINE_integer('disc_train_steps', default = 5, help = 'discriminator trai
 flags.DEFINE_integer('gen_train_steps', default = 1, help = 'generator trainig steps');
 flags.DEFINE_integer('checkpoint_steps', default = 1000, help = 'how many steps for each checkpoint');
 flags.DEFINE_integer('eval_steps', default = 100, help = 'how many steps for each evaluation');
+flags.DEFINE_bool('save_model', default = False, help = 'whether to save model');
 
 def main(unused_argv):
   # 1) create dataset
@@ -45,6 +46,12 @@ def main(unused_argv):
   if not exists(join('checkpoints', FLAGS.model)): mkdir(join('checkpoints', FLAGS.model));
   checkpoint = tf.train.Checkpoint(generator = generator, discriminator = discriminator, optimizer = optimizer);
   checkpoint.restore(tf.train.latest_checkpoint(join('checkpoints', FLAGS.model)));
+  if FLAGS.save_model == True:
+    if not exists('trained'): mkdir('trained');
+    if not exists(join('trained', FLAGS.model)): mkdir(join('trained', FLAGS.model));
+    generator.save(join('trained', FLAGS.model, 'generator.h5'));
+    discriminator.save(join('trained', FLAGS.model, 'discriminator.h5'));
+    exit();
   # 5) log
   log = tf.summary.create_file_writer('checkpoints');
   gen_loss = tf.keras.metrics.Mean(name = 'gen_loss', dtype = tf.float32);
