@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from os import mkdir;
 from os.path import join, exists;
 from absl import app, flags;
 import tensorflow as tf;
