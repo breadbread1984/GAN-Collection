@@ -12,7 +12,7 @@ flags.DEFINE_enum('model', default = 'gan', enum_values = ['gan', 'dcgan'], help
 flags.DEFINE_integer('batch_size', default = 32, help = 'batch size');
 flags.DEFINE_integer('disc_train_steps', default = 5, help = 'discriminator training steps');
 flags.DEFINE_integer('gen_train_steps', default = 1, help = 'generator trainig steps');
-flags.DEFINE_integer('checkpoint_steps', default = 100, help = 'how many steps for each checkpoint');
+flags.DEFINE_integer('checkpoint_steps', default = 1000, help = 'how many steps for each checkpoint');
 flags.DEFINE_integer('eval_steps', default = 100, help = 'how many steps for each evaluation');
 
 def main(unused_argv):
@@ -96,6 +96,7 @@ def main(unused_argv):
         tf.summary.scalar('d_loss', disc_loss.result(), step = optimizer.iterations);
         tf.summary.scalar('g_loss', gen_loss.result(), step = optimizer.iterations);
         tf.summary.image('sample', image, step = optimizer.iterations);
+        print('#%d: d_loss = %f g_loss = %f' % (disc_loss.result(), gen_loss.result()));
         disc_loss.reset_states();
         gen_loss.reset_states();
 
