@@ -89,7 +89,7 @@ def main(unused_argv):
           fake_preds = discriminator(fakes);
         elif FLAGS.model == 'dcgan':
           fakes = generator([noises, labels]);
-          fake_preds = discriminator(fakes);
+          fake_preds = discriminator([fakes, labels]);
         g_loss = tf.keras.losses.BinaryCrossentropy(from_logits = False)(tf.ones_like(fake_preds), fake_preds);
       grads = tape.gradient(g_loss, generator.trainable_variables);
       optimizer.apply_gradients(zip(grads, generator.trainable_variables));
