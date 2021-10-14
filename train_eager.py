@@ -99,7 +99,8 @@ def main(unused_argv):
     if tf.equal(optimizer.iterations % FLAGS.eval_steps, 0):
       with log.as_default():
         image = tf.cast((fakes[0:1,...] + 1) / 2 * 255, dtype = tf.uint8);
-        image = tf.tile(tf.expand_dims(image, axis = -1), (1,1,1,3));
+        if FLAGS.model == 'gan':
+          image = tf.tile(tf.expand_dims(image, axis = -1), (1,1,1,3));
         tf.summary.scalar('d_loss', disc_loss.result(), step = optimizer.iterations);
         tf.summary.scalar('g_loss', gen_loss.result(), step = optimizer.iterations);
         tf.summary.image('sample', image, step = optimizer.iterations);
