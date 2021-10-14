@@ -35,7 +35,7 @@ def main(unused_argv):
     lr = 2e-4;
   elif FLAGS.model == 'dcgan':
     generator = dcgan.Generator(class_num = dataset.class_num, y_size = 10);
-    discriminator = dcgan.Discriminator();
+    discriminator = dcgan.Discriminator(class_num = dataset.class_num, y_size = 10);
     lr = 2e-4;
   else:
     raise Exception('unknown model!');
